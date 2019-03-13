@@ -1,0 +1,427 @@
+<a id='part1'></a>
+
+<center><img src="http://i.imgur.com/sSaOozN.png" width="500"></center>
+<br>
+
+## 599 Final Project: US Prekindergarten Attendance in 2000
+
+<br>
+
+### By: Ying Yang, Yiwen Yang, Zhiyi Wang, Qiqi Wang
+
+_________
+
+Contents: <br>
+
+- [Background and Data Summary](#Background)
+- [Sample demography](#Demography)
+- [Analysis](#Analysis)
+- [Conclusion](#Conclusion)
+
+_________
+
+<a id='Background'></a>
+
+## Background and Data Summary
+
+<br>
+
+High-quality early education will influence children’s learning skill and social ability for lifelong time. Our research aims to understand the situation of school attendance for children aged 3 to 4 in the United States and what factors influence whether children go to school or not.
+
+<br>
+
+Our dataset comes from 1% 2000 American Community Survey (ACS) conducted by Census Bureau, which contains 77,788 observations in total. The following is our dependent variable and independent variables.
+
+<br>
+
+Dependent Variable:
+
+- School: Whether the kids are in school or not. (dummy variable)
+
+<br>
+
+Independent Variables:
+
+- Race: Asian or Islander, Black, Native, White, Multi-races, Other.
+
+- Sex: Male or female. (dummy variable)
+
+- Income: Household income level based on 2000 poverty threshold.
+
+- Education: The highest education of parents.
+
+<br>
+
+The data we have used was previously organized in Stata, you can see the codebook [HERE](https://github.com/ps0205vi/Evans599FinalProject/blob/master/599CodeBook.csv).
+
+<br>
+
+[Go to table of contents](#part1)
+
+_________
+
+<a id='Demography'></a>
+
+## Sample Demography
+
+<br>
+
+Firstly, we would like to know the overall school attendance situation by states. This map shows that school attendance rates in eastern states are higher than those in western states.
+
+```{r, echo=FALSE, fig.align='center'}
+link="https://github.com/ps0205vi/Yorozuya/raw/master/sarate.csv"
+mydata2=read.csv(link)
+
+sourceText='Source: American Community Survey (ACS)'
+
+library(usmap)
+library(ggplot2)
+
+plot_usmap(data = mydata2, values = "sarate", lines = "red") + 
+  scale_fill_continuous(
+    low = "white", high = "red", name = "School Attendance Rate 2000"
+  ) + theme(legend.position = "right") + labs(title="Figure 1. Nationwide School Attendance Rate 2000 by State", caption = sourceText)
+
+```
+
+Then, the following charts demonstrate the race and gender distribution in our sample. The majority of our sample is White. The number of boys and girls is basically the same.
+
+<br>
+
+```{r, echo=FALSE}
+link="https://github.com/ps0205vi/Evans599FinalProject/raw/master/VPKdata.csv"
+mydata=read.csv(link)
+```
+
+```{r, echo=FALSE}
+absoluteT=table(mydata$raced,exclude = 'nothing')
+ToPlot=prop.table(absoluteT)
+ToPlot=round(ToPlot*100,2)
+titleText2='Figure 2. The Estimated Race Distribution \n of Kids Aged 3-4 in United States'
+ToPlotOrd=sort(ToPlot)
+tableFreq=as.data.frame(ToPlotOrd)
+names(tableFreq)=c("race","ratio")
+```
+
+```{r, echo=FALSE, fig.align='center'}
+paletteHere=rainbow(length(ToPlot))
+plotLabels=paste0(round(ToPlot,1),'%')
+pie(ToPlot,
+    labels = plotLabels,
+    col=paletteHere,
+    main=titleText2,
+    cex=0.7)
+title(sub=sourceText,line = 0)
+legend(x="right", 
+       legend=names(ToPlot), 
+       fill = paletteHere,
+       bty = 'n', 
+       cex = 0.7)
+```
+
+```{r, echo=FALSE, fig.align='center'}
+absoluteT1=table(mydata$sex,exclude = 'nothing')
+ToPlot1=prop.table(absoluteT1)
+ToPlot1=round(ToPlot1*100,2)
+plotLabels1=paste0(round(ToPlot1,2),'%')
+titleText3='Figure 3. The Estimated Gender Distribution \n of Kids Aged 3-4 in United States'
+paletteHere1=rainbow(length(ToPlot1))
+
+pie(ToPlot1,
+    labels = plotLabels1,
+    col=paletteHere1,
+    main=titleText3,
+    cex=1)
+title(sub=sourceText,line = 0)
+legend(x="right", 
+       legend=names(ToPlot1), 
+       fill = paletteHere1,
+       bty = 'n', 
+       cex = 1)
+```
+
+Moreover, we want to learn the household income level of our sample. The boxplot shows that 25% of households are under 1.25 times of poverty threshold, 50% of households are under 2.36 times of poverty threshold, 75% of households are under 3.89 times of poverty threshold.
+
+<br>
+
+```{r, echo=FALSE, fig.align='center'}
+library(ggplot2)
+box1 = ggplot(mydata, aes(y=poverty)) 
+box1 = box1 + geom_boxplot() + coord_flip()
+titleText4="Figure 4. The Estimated Household Income Level \n of Kids Aged 3-4 in United States"
+box1+ labs(title=titleText4,
+                     x =NULL, 
+                     y = NULL,
+                     caption = sourceText) + theme(plot.caption = element_text(hjust = 0),
+                    plot.title = element_text(hjust = 0.5),
+                    axis.text.x = element_text(size=9,angle = 0),
+                    axis.ticks.length=unit(0,"cm"),
+                    axis.ticks=element_blank())
+```
+
+<br>
+
+Lastly, parents’ highest education level is shown in the following pie chart. It shows that the highest education level of 33.57% of households is grade 12. Among 53.29% of households, there is at least one parent has received college education.
+
+<br>
+
+```{r, echo=FALSE, fig.align='center'}
+absoluteT2=table(mydata$educh,exclude = 'nothing')
+ToPlot2=prop.table(absoluteT2)*100
+
+names(ToPlot2)[1]='No Respond'
+titleText5='Figure 5. The Estimated Highest Education \n of Parents of Kids Aged 3-4 in United Sates'
+
+plotLabels2=paste0(round(ToPlot2,2),'%') 
+paletteHere2=rainbow(length(ToPlot2))
+
+pie(x=ToPlot2,
+    col = paletteHere2, 
+    labels = plotLabels2,
+    main=titleText5,
+    sub=sourceText,
+    cex = 0.5)
+
+legend(x="right",
+       legend=names(ToPlot2), 
+       fill = paletteHere2,
+       bty = 'n', 
+       cex = 0.5  
+       ) 
+```
+
+<br>
+
+[Go to table of contents](#part1)
+
+_________
+
+<a id='Analysis'></a>
+
+## Analysis
+
+<br>
+
+### Independent Variables Analysis
+
+<br>
+
+#### Race and school attendance:
+
+<br>
+
+Firstly, according to the analysis between the school attendance rate and the students’ races, Black are most likely to send their children to school (57.3%), followed by the native and the Asian or Islander (both for 49.1%). Then the chances for the white, the multiracial population and the others are 48.1%, 47.4% and 36.9% respectively.
+
+<br>
+
+```{r, echo=FALSE, include=FALSE}
+library(magrittr)
+library(dplyr)
+```
+
+
+```{r, echo=FALSE, fig.align='center'}
+RaceTotal=table(mydata$school,mydata$raced)%>% 
+        prop.table() %>% 
+        "*"(100)%>% 
+        round(2) 
+        
+SchoolRace=table(mydata$school,mydata$raced)%>%
+         prop.table(margin = 2)%>%   
+         round(3)
+
+df.T1=as.data.frame(SchoolRace) 
+names(df.T1)=c('School','Race','Percent')
+
+dfnew1 <- df.T1 %>% filter(SchoolRace, School == "In school")
+
+
+titleText6='Figure 6. School Attendance Rate for \n Different Races'
+
+base  = ggplot(dfnew1, aes(x = reorder(Race,-Percent), y = Percent ) ) 
+bars1 = base + geom_bar( stat = "identity" ) + theme_minimal()+scale_y_continuous(labels=scales::percent) +geom_text(aes(label=paste0(Percent*100, '%')), vjust=1.6, color="white", size=3.5)
+bars2 = bars1 + facet_wrap( ~ School ,nrow = 1) 
+bars2 + labs(title=titleText6,
+                     caption = sourceText) + theme(plot.caption = element_text(hjust = 0),
+                    plot.title = element_text(hjust = 0.5),
+                    axis.text.x = element_text(size=9,angle = 0),
+                    axis.ticks.length=unit(0,"cm"),
+                    axis.ticks=element_blank())
+
+```
+
+<br>
+
+#### Gender and school attendance:
+
+<br>
+
+Then, we looked at the effect of the sexual distinction on school attendance. There are 48.8% of the female attending the school, compared to 48% of the male. So, it is almost the same chance for parents to send their children to school.
+
+<br>
+
+```{r, echo=FALSE, fig.align='center'}
+SexTotal=table(mydata$school,mydata$sex)%>% 
+        prop.table() %>% 
+        "*"(100)%>% 
+        round(2) 
+SchoolSex=table(mydata$school,mydata$sex)%>%
+         prop.table(margin = 2)%>%   
+         round(3)
+
+df.T3=as.data.frame(SchoolSex)
+names(df.T3)=c('School','Sex','Percent')
+dfnew3 <- df.T3 %>% filter(School == "In school")
+
+titleText7='Figure 7. School Attendance Rate for \n Different Genders'
+
+base  = ggplot(dfnew3, aes(x = Sex, y = Percent ) ) 
+bars1 = base + geom_bar( stat = "identity" ) + theme_minimal() +scale_y_continuous(labels=scales::percent) +geom_text(aes(label=paste0(Percent*100, '%')), vjust=1.6, color="white", size=3.5)
+bars2 = bars1 + facet_wrap( ~ School ,nrow = 1) 
+bars2 + labs(title=titleText7,
+                     caption = sourceText) + theme(plot.caption = element_text(hjust = 0),
+                    plot.title = element_text(hjust = 0.5,),
+                    axis.text.x = element_text(size=9,angle = 0),
+                    axis.ticks.length=unit(0,"cm"),
+                    axis.ticks=element_blank())
+```
+
+<br>
+
+#### Income and school attendance:
+
+<br>
+
+*(Group 0: N/A; Group 1: Household income level between 1 to 100 percentage of poverty threshold; Group 2: 101 to 200; Group 3: 201 to 300; Group 4: 301 to 400; Group 5: 401 to 500; Group 6: 501)*
+
+<br>
+
+Third, school attendance rates among different income level are mixed. Children in group 2 are least likely to go to school, while children in group 6 are most likely to go to school.
+
+<br>
+
+```{r, echo=FALSE, fig.align='center'}
+IncomeTotal=table(mydata$school,mydata$pov)%>% 
+        prop.table() %>% 
+        "*"(100)%>% 
+        round(2) 
+SchoolIncome=table(mydata$school,mydata$pov)%>%
+         prop.table(margin = 2)%>%   
+         round(3)
+
+df.T2=as.data.frame(SchoolIncome)
+names(df.T2)=c('School','Income','Percent')
+
+dfnew2 <- df.T2 %>% filter(School == "In school")
+
+titleText8='Figure 8. School Attendance Rate for \n Different Income Levels'
+
+base  = ggplot(dfnew2, aes(x = Income, y = Percent ) ) 
+bars1 = base + geom_bar( stat = "identity" ) + theme_minimal()+scale_y_continuous(labels=scales::percent) +geom_text(aes(label=paste0(Percent*100, '%')), vjust=1.6, color="white", size=3.5)
+bars2 = bars1 + facet_wrap( ~ School ,nrow = 1) 
+bars2 + labs(title=titleText8,
+                     caption = sourceText) + theme(plot.caption = element_text(hjust = 0),
+                    plot.title = element_text(hjust = 0.5),
+                    axis.text.x = element_text(size=9,angle = 0),
+                    axis.ticks.length=unit(0,"cm"))+geom_vline(aes(xintercept=2.5),linetype=5,col="red") +geom_text(aes(x=2.5, label="Poverty Threshold", y=0.55), colour="blue", angle=90,vjust=1.2,cex=4)
+```
+
+<br>
+
+#### Education and school attendance:
+
+<br>
+
+*(Group 0: N/A or no schooling; Group 1: Nursery school to grade 4; Group 2: Grade 5, 6, 7, or 8; Group 3: Grade 9; Group 4: Grade 10; Group 5: Grade 11; Group 6: Grade 12; Group 7: 1 year of college; Group 8: 2 years of college; Group 9: 3 years of college; Group 10: 4 years of college; Group 11: 5+ years of college)*
+
+<br>
+
+The following bar chart shows the school attendance rates in each parents’ highest education level. Overall, the higher parents’ highest education level is, the more likely are children to go to school.
+
+<br>
+
+```{r, echo=FALSE, fig.align='center'}
+EducationTotal=table(mydata$school,mydata$educhh)%>% 
+        prop.table() %>% 
+        "*"(100)%>% 
+        round(2) 
+        
+SchoolEducation=table(mydata$school,mydata$educhh)%>%
+         prop.table(margin = 2)%>%   
+         round(3)
+
+df.T2=as.data.frame(SchoolEducation)
+names(df.T2)=c('School','Education','Percent')
+
+dfnew2 <- df.T2 %>% filter(School == "In school")
+
+titleText9='Figure 9. School Attendance Rate for \n Different Highest Educational Levels of Parents'
+
+base  = ggplot(dfnew2, aes(x = Education, y = Percent ) ) 
+bars1 = base + geom_bar( stat = "identity" ) + theme_minimal() +scale_y_continuous(labels=scales::percent) +geom_text(aes(label=paste0(Percent*100, '%')), vjust=1.6, color="white", size=2)
+bars2 = bars1 + facet_wrap( ~ School ,nrow = 1) 
+bars2 + labs(title=titleText9,
+                     caption = sourceText) + theme(plot.caption = element_text(hjust = 0),
+                    plot.title = element_text(hjust = 0.5),
+                    axis.text.x = element_text(size=9,angle = 0),
+                    axis.ticks.length=unit(0,"cm"),
+                    axis.ticks=element_blank())
+```
+
+<br>
+
+### Regression Analysis
+
+<br>
+
+We used the logit model to analyze effects of race, sex, income, and parents’ education on children’s school attendance. The result shows that parents’ highest education and household income level have a significant correlation with the dependent variable.
+
+- Holding other variables constant, kids with parents of higher education are more likely to receive early education. 
+- Holding other variables constant, kids in households of higher income have a higher likelihood of receiving early education.
+- Holding other variables constant, Black, Native, and children with multi races are more likely to go to school than Asian/Islander.
+- Gender is not significant at the 5% level.
+
+<br>
+
+```{r, echo=FALSE, fig.align='center'}
+mydata$school2=ifelse(mydata$school=='In school',1,0)
+mylogit <- glm(school2 ~ educhh + pov + raced + sex, data = mydata, family=binomial(link="logit"))
+
+library(dotwhisker)
+library(broom)
+library(dplyr)
+mylogit_t = tidy(mylogit) %>%
+    mutate(model = "mylogit") 
+
+dwplot(mylogit_t)+labs(title="Figure 10. Regression Result", caption=sourceText)
+```
+
+<br>
+
+[Go to table of contents](#part1)
+
+_________
+
+<a id='Conclusion'></a>
+
+## Conclusion
+
+<br>
+
+Overall, our research demonstrates school attendance rates in eastern states are higher than those in western states. Both household income and parents’ education level have positive impacts on children's school attendance.
+
+<br>
+
+In the future, governments are supposed to invest more education resources in the western area and provide more financial or policy support for children from low-income and low-education families.
+
+______
+
+# Thanks for reading!
+
+<br>
+
+[Go back to table of contents](#part1)
+
+[Go back to main contents](https://ps0205vi.github.io/Evans599FinalProject/)
+
+[Go to REPO to check R code](https://github.com/ps0205vi/Evans599FinalProject)
